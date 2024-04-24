@@ -1,0 +1,11 @@
+﻿Group_id,Movement,Description
+1,up,makes the drone go higher
+2,down,makes the drone go lower
+3,left,makes the drone move left
+4,right,makes the drone move right
+5,back,makes the drone go backwards
+6,front,makes the drone go forward
+7,spin,makes the drone spin (from right to left)
+8,clap,makes the drone to go up and down until claps stop
+
+
