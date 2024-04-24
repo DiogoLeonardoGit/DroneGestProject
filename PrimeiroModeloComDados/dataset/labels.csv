@@ -6,6 +6,4 @@
 5,back,makes the drone go backwards
 6,front,makes the drone go forward
 7,spin,makes the drone spin (from right to left)
-8,clap,makes the drone to go up and down until claps stop
-
-
+8,clap,makes the drone take off or land
