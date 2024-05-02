@@ -77,6 +77,7 @@ print("n_surfaces in x_train(x_train rows/128): ", x_train.shape[0] / 128, " == 
 # difine shape to be used in the model
 shape = x_train.shape
 print("selected shape: ", shape)
+print("y_train shape: ", y_train.shape)
 
 # displays a plt of the surfaces count
 def plot_surfaces_count():
@@ -91,6 +92,7 @@ plot_surfaces_count()
 le = preprocessing.LabelEncoder()
 le.fit(y_train)
 y_train_encoded = le.transform(y_train)
+print("Labels encoded: ", y_train_encoded[0:15])
 
 # print the 5 first rows data from y_train_encoded
 print("y_train_encoded data example: ", y_train_encoded[0:5])
