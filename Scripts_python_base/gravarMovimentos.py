@@ -67,12 +67,15 @@ with open(file_path, 'a' if file_exists else 'w') as file, \
     try:
         while movements_count < max_movements:
             # Registra o movimento por 2 segundos
-            print(f"Registrando movimento {gesture_id} por 2 segundos...")
+            print(f"[{movements_count}] A registar movimento {gesture_id} por 2 segundos...")
             start_time = time.time()
 
             # Defina o número de amostras desejado para 2 segundos
             samples_per_period = 64
             samples_count = 0
+
+            # Clear the serial input buffer to get the most recent data
+            ser.reset_input_buffer()
 
             while samples_count < samples_per_period:
                 line = ser.readline().decode('utf-8').strip()  # Lê uma linha da porta serial
@@ -104,8 +107,14 @@ with open(file_path, 'a' if file_exists else 'w') as file, \
 
             # Pausa por 3 segundos entre os movimentos
             if movements_count < max_movements:
-                print("Pausando por 3 segundos...")
-                time.sleep(3)
+                print(f"[{movements_count}] Pausando por 3 segundos... 3...", end='')
+                time.sleep(1)
+                print(" 2...", end='')
+                time.sleep(1)
+                print(" 1...", end='')
+                time.sleep(1)
+                print("VAI")
+
 
         print("Todos os movimentos foram registrados.")
     except KeyboardInterrupt:

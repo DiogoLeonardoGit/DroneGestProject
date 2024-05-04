@@ -14,7 +14,7 @@ import seaborn as sns
 
 # Step 1: Read the Data Files
 data = pd.read_csv('dataset/data.csv')
-validation = pd.read_csv('dataset/validation.csv')
+validation = pd.read_csv('dataset/validation_data.csv')
 
 le = preprocessing.LabelEncoder()
 
@@ -24,7 +24,7 @@ def reshape_data(data):
     labels = validation['Gesture_id']
 
     # Drop unnecessary columns
-    data = data.drop(['Group_id', 'Time (ms)'], axis=1)
+    data = data.drop(['Group_id', 'Time(ms)'], axis=1)
 
     # Reshape the data into the desired shape
     data = data.values.reshape(-1, 64, 6)
@@ -44,10 +44,20 @@ print("Shape of labels:", labels_encoded.shape)
 # define shape
 shape = data.shape
 
+# count the number of unique gestures from the labels_encoded
+unique_gestures = len(np.unique(labels_encoded))
+print("Number of unique gestures: ", unique_gestures)
+
 def plot_gesture_count():
+    # Count the occurrences of each label
+    label_counts = pd.Series(labels_encoded).value_counts()
+
+    # plot the gestures count
     plt.figure(figsize=(10, 5))
-    sns.countplot(labels_encoded)
-    plt.title('Gestures count')
+    sns.barplot(x=label_counts.index, y=label_counts.values)
+    plt.title('Gestures Count')
+    plt.xlabel('Gesture')
+    plt.ylabel('Count')
     plt.show()
 
 plot_gesture_count()
@@ -55,7 +65,15 @@ plot_gesture_count()
 # split the data to be used in the model
 x_train, x_val, y_train, y_val = train_test_split(data, labels_encoded, test_size=0.2, random_state=0)
 
-if not os.path.exists('model.keras'):
+print("Insira um modelo existente para avaliação ou insira um novo modelo para treinamento")
+MODEL = input("Model: ") + ".keras"
+
+if not os.path.exists(MODEL):
+
+    EPOCH = int(input("Epochs: "))
+    BATCH = int(input("Batch size: "))
+    LEARNING_RATE = float(input("Learning rate: "))
+
     # create the model
     def create_model():
         model = Sequential()
@@ -68,13 +86,14 @@ if not os.path.exists('model.keras'):
         model.add(Flatten())
         model.add(Dense(256, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(8, activation='softmax'))
+        model.add(Dense(unique_gestures, activation='softmax'))
 
-        model.compile(optimizer=Adam(learning_rate=0.003), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        history = model.fit(x_train, y_train, batch_size=32, epochs=250, validation_data=(x_val, y_val), verbose=1)
+        model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        history = model.fit(x_train, y_train, batch_size=BATCH, epochs=EPOCH, validation_data=(x_val, y_val), verbose=1)
 
         # Salvar o modelo
-        model.save('model.keras')
+
+        model.save(MODEL)
         print("Model saved")
         return model, history
 
@@ -105,7 +124,7 @@ if not os.path.exists('model.keras'):
 
 else:
     # load the model
-    model = load_model('model.keras')
+    model = load_model(MODEL)
     print("Model loaded")
 
 
