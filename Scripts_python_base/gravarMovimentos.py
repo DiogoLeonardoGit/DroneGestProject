@@ -5,7 +5,7 @@ import shutil
 from datetime import datetime
 
 # Abre a porta serial
-arduino_port = 'COM4'
+arduino_port = 'COM5'
 baud_rate = 115200
 ser = serial.Serial(arduino_port, baud_rate, timeout=1)  # Adiciona timeout de 1 segundo
 
@@ -61,8 +61,13 @@ with open(file_path, 'a' if file_exists else 'w') as file, \
     max_movements = 100
 
     # inicio da gravacao
-    print("Prepare-se para gravar os movimentos... A começar em 3 segundos...")
-    time.sleep(3)
+    print("Prepare-se para gravar os movimentos... A começar em 3 segundos...", end='')
+    time.sleep(1)
+    print(" 2...", end='')
+    time.sleep(1)
+    print(" 1...", end='')
+    time.sleep(1)
+    print("VAI")
 
     try:
         while movements_count < max_movements:
@@ -73,6 +78,7 @@ with open(file_path, 'a' if file_exists else 'w') as file, \
             # Defina o número de amostras desejado para 2 segundos
             samples_per_period = 64
             samples_count = 0
+            movement_data = ""
 
             # Clear the serial input buffer to get the most recent data
             ser.reset_input_buffer()
@@ -90,15 +96,16 @@ with open(file_path, 'a' if file_exists else 'w') as file, \
                         gyro_y = data[5]
                         gyro_z = data[6]
                         current_time = int(round(time.time() * 1000))
-                        file.write(
-                            f"{group_id},{current_time},{accel_x},{accel_y},{accel_z},{gyro_x},{gyro_y},{gyro_z}\n")
-                        file.flush()
+                        movement_data += f"{group_id},{current_time},{accel_x},{accel_y},{accel_z},{gyro_x},{gyro_y},{gyro_z}\n"
                         samples_count += 1
 
                 # Pause para manter a taxa de amostragem
                 time.sleep(1 / 32)  # 32 amostras por segundo
 
-            # Escreve no arquivo de validação
+            # Escreve nos ficheiros de data e validação
+            file.write(movement_data)
+            file.flush()
+
             validation_file.write(f"{group_id},{gesture_id}\n")
             validation_file.flush()
 
@@ -107,9 +114,7 @@ with open(file_path, 'a' if file_exists else 'w') as file, \
 
             # Pausa por 3 segundos entre os movimentos
             if movements_count < max_movements:
-                print(f"[{movements_count}] Pausando por 3 segundos... 3...", end='')
-                time.sleep(1)
-                print(" 2...", end='')
+                print(f"[{movements_count}] Pausando por 2 segundos... 2...", end='')
                 time.sleep(1)
                 print(" 1...", end='')
                 time.sleep(1)

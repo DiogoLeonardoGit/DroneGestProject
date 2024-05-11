@@ -1,0 +1,1 @@
+- Por vezes, pode ocorrer o erro da porta COM não ser detetada. Para este erro encontramos uma solução que têm funcionado que consiste em fazer um click de 1 segundo no botão RST do esp32, enquanto mantemos precionado o botão Boot do tabém do esp32, que largamos após isto.

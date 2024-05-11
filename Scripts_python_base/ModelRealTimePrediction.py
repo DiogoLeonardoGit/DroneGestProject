@@ -13,14 +13,13 @@ model = load_model(model_name + '.keras')
 print("Model loaded")
 
 # Abre a porta serial
-arduino_port = 'COM4'
+arduino_port = 'COM5'
 baud_rate = 115200
 ser = serial.Serial(arduino_port, baud_rate, timeout=1)  # Adiciona timeout de 1 segundo
 
 ################################ record realtime movement ################################
 def record_movement():
     samples_per_period = 64
-    samples_count = 0
     samples_data = []  # List to store the data
 
     # inicio da gravacao
@@ -72,7 +71,10 @@ def predict_movement(samples_data):
     # Predict the movement
     prediction = model.predict(samples_data)
 
-    return prediction
+    # Format the prediction probabilities as percentages
+    formatted_prediction = [round(prob * 100, 2) for prob in prediction[0]]
+
+    return formatted_prediction
 
 
 ################################ record and predict movement ###############################
@@ -84,6 +86,17 @@ while user_input != 'stop':
 
     # Feed the data to the model
     prediction = predict_movement(samples_data)
+
+    # Print the prediction
     print("Prediction:", prediction)
+
+    # moviment per class
+    if prediction[0] > 85:
+        print("Movimento: Up")
+    elif prediction[1] > 85:
+        print("Movimento: Down")
+    else:
+        print("Movimento: Nenhum")
+
 
     user_input = input("Enter para continuar ou 'stop' para parar: ")

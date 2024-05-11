@@ -65,7 +65,15 @@ plot_gesture_count()
 # split the data to be used in the model
 x_train, x_val, y_train, y_val = train_test_split(data, labels_encoded, test_size=0.2, random_state=0)
 
-if not os.path.exists('model.keras'):
+print("Insira um modelo existente para avaliação ou insira um novo modelo para treinamento")
+MODEL = input("Model: ") + ".keras"
+
+if not os.path.exists(MODEL):
+
+    EPOCH = int(input("Epochs: "))
+    BATCH = int(input("Batch size: "))
+    LEARNING_RATE = float(input("Learning rate: "))
+
     # create the model
     def create_model():
         model = Sequential()
@@ -80,11 +88,12 @@ if not os.path.exists('model.keras'):
         model.add(Dropout(0.5))
         model.add(Dense(unique_gestures, activation='softmax'))
 
-        model.compile(optimizer=Adam(learning_rate=0.003), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        history = model.fit(x_train, y_train, batch_size=32, epochs=250, validation_data=(x_val, y_val), verbose=1)
+        model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        history = model.fit(x_train, y_train, batch_size=BATCH, epochs=EPOCH, validation_data=(x_val, y_val), verbose=1)
 
         # Salvar o modelo
-        model.save('model.keras')
+
+        model.save(MODEL)
         print("Model saved")
         return model, history
 
@@ -115,7 +124,7 @@ if not os.path.exists('model.keras'):
 
 else:
     # load the model
-    model = load_model('model.keras')
+    model = load_model(MODEL)
     print("Model loaded")
 
 
