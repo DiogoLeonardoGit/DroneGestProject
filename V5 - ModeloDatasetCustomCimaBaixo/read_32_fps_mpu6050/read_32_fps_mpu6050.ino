@@ -5,12 +5,12 @@
 
 #define SDA_PIN 7  // GPIO7
 #define SCL_PIN 6  // GPIO6
-#define LED_PIN 8  // GPIO2 (LED on ESP32)
+#define LED_PIN 8   // GPIO2 (LED on ESP32)
 
 Adafruit_MPU6050 mpu;
 const unsigned long interval = 1000 / 32;  // Interval between readings in milliseconds (1000ms / 32fps)
-bool shouldRead = true;                    // Flag to control whether to read sensor data
-unsigned long counter = 0;                 // Counter to keep track of prints
+bool shouldRead = true; // Flag to control whether to read sensor data
+unsigned long counter = 0; // Counter to keep track of prints
 
 // Define NeoPixel settings
 #define NUM_LEDS 1
@@ -19,15 +19,15 @@ Adafruit_NeoPixel pixels(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 void setup(void) {
   Serial.begin(115200);
   while (!Serial)
-    ;  // Wait for serial port to connect
+    ; // Wait for serial port to connect
 
   Wire.begin(SDA_PIN, SCL_PIN);  // Initialize I2C with the specified pins
-  delay(2000);                   // Wait for the sensor to initialize
+  delay(2000);  // Wait for the sensor to initialize
 
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1)
-      ;  // Wait indefinitely
+      ; // Wait indefinitely
   }
   Serial.println("MPU6050 Connected!");
 }
@@ -99,9 +99,9 @@ void blinkNeoPixel() {
 
     // Set LED color to white with reduced intensity
     if (ledState) {
-      pixels.setPixelColor(0, pixels.Color(10, 10, 10));  // White color with low intensity
+      pixels.setPixelColor(0, pixels.Color(10, 10, 10)); // White color with low intensity
     } else {
-      pixels.setPixelColor(0, pixels.Color(0, 0, 0));  // Turn off LED
+      pixels.setPixelColor(0, pixels.Color(0, 0, 0)); // Turn off LED
     }
     pixels.show();
   }

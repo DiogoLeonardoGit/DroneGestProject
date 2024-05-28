@@ -13,7 +13,7 @@ model = load_model(model_name + '.keras')
 print("Model loaded")
 
 # Abre a porta serial
-arduino_port = 'COM4'
+arduino_port = 'COM5'
 baud_rate = 115200
 ser = serial.Serial(arduino_port, baud_rate, timeout=1)  # Adiciona timeout de 1 segundo
 
@@ -93,12 +93,24 @@ while user_input != 'stop':
     # moviment per class
     # each position of the prediction array corresponds to the
     # percentage 0-100% of the model's confidence in the (movement) class
-    if prediction[0] > 85:
+    if prediction[0] > 50:
         print("Movimento: Nenhum (noise)")
-    elif prediction[1] > 85:
+    elif prediction[1] > 50:
         print("Movimento: Up")
-    elif prediction[2] > 85:
+    elif prediction[2] > 50:
         print("Movimento: Down")
+    elif prediction[3] > 50:
+        print("Movimento: Left")
+    elif prediction[4] > 50:
+        print("Movimento: Right")
+    elif prediction[5] > 50:
+        print("Movimento: Back")
+    elif prediction[6] > 50:
+        print("Movimento: Front")
+    elif prediction[7] > 50:
+        print("Movimento: Spin")
+    elif prediction[8] > 50:
+        print("Movimento: Clap")
     else:
         print("Movimento: Não reconhecido")
 
