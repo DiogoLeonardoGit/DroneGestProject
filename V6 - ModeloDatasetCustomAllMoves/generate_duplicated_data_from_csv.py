@@ -33,7 +33,7 @@ with open(data, "a") as data_file, open(validation_data, "a") as validation_file
                 last_line = line
                 break
         last_group_id = last_line.split(',')[0] if last_line else 0
-        start_number = int(last_group_id) + 1
+        start_number = int(float(last_group_id) + 1)
         copied_group_id = 0
         data_file_read.seek(0)
 
@@ -47,7 +47,7 @@ with open(data, "a") as data_file, open(validation_data, "a") as validation_file
                 # Extract data
                 data = ",".join(parts[1:])
                 # Write original group_id
-                copied_group_id = int(parts[0])
+                copied_group_id = int(float(parts[0]))
 
                 # Write original data
                 data_file.write(f"{start_number},{data}\n")
@@ -62,7 +62,7 @@ with open(data, "a") as data_file, open(validation_data, "a") as validation_file
                     if len(parts2) >= 2:
                         group_id = parts2[0]
                         movement = parts2[1]
-                        if int(group_id) == copied_group_id:
+                        if int(float(group_id)) == copied_group_id:
                             break
 
                 # Write validation data
