@@ -10,8 +10,8 @@ from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 import seaborn as sns
-from tensorflow.python.keras.callbacks import ReduceLROnPlateau, EarlyStopping
-from tensorflow.python.keras.regularizers import l2
+from keras.callbacks import ReduceLROnPlateau, EarlyStopping
+from keras.regularizers import l2
 
 # Step 1: Read the Data Files
 

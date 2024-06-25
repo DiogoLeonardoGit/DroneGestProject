@@ -108,6 +108,8 @@ while user_input != 'stop':
         print("Movimento: Spin")
     elif prediction[8] > 50:
         print("Movimento: Clap")
+    elif prediction[9] > 50:
+        print("Movimento: Cut")
     else:
         print("Movimento: Não reconhecido")
 
