@@ -11,7 +11,7 @@ ser = serial.Serial(arduino_port, baud_rate, timeout=1)  # Adiciona timeout de 1
 
 # Pede informações ao usuário
 file_name = input("Digite o nome do arquivo: ")
-gesture_id = int(input("Digite o ID do movimento (de 0 a 8): "))
+gesture_id = int(input("Digite o ID do movimento (de 0 a 9): "))
 
 # Define o cabeçalho do arquivo CSV
 header = "Group_id,Time(ms),AccelX,AccelY,AccelZ,GyroX,GyroY,GyroZ\n"

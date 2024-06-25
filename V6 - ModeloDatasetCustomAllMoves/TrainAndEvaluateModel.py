@@ -53,6 +53,7 @@ def plot_gesture_count():
     plt.xlabel('Gesture')
     plt.ylabel('Count')
     plt.savefig("gesture_count.png")
+    plt.show()
     plt.close()
 
 
@@ -196,7 +197,7 @@ def generate_report(model_name, accuracy, fscore, fpr, tpr, roc_auc, history, cl
         f.write(buffer.getvalue())
 
     # Remove the temporary images
-    os.remove("gesture_count.png")
+    #os.remove("gesture_count.png")
     os.remove("roc_curve.png")
     os.remove("loss_curve.png")
     os.remove("accuracy_curve.png")
@@ -265,7 +266,9 @@ if choice == 't' or choice == 'T':
             report_directory = "Reports/"
             model.save(model_name)
             print("Model saved")
+            print("Model Accuracy: ", accuracy)
             generate_report(model_name, accuracy, fscore, fpr, tpr, roc_auc, history, class_report, conf_matrix)
+            print("Report generated")
         else:
             for i in range(n_models):
                 print("Model ", i + 1)
@@ -292,6 +295,7 @@ elif choice == 'a' or choice == 'A':
         model = load_model(MODEL)
         print("Model loaded")
         accuracy, fscore, fpr, tpr, roc_auc, class_report, conf_matrix = evaluate_model(model, x_val, y_val)
+        print(f"Accuracy: {accuracy:.4f}\nF-Score: {fscore:.4f}\nROC AUC:\n {roc_auc}\nConfusion Matrix:\n {conf_matrix}")
     else:
         print("Model not found")
         exit()

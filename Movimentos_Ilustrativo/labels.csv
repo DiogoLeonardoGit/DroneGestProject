@@ -8,3 +8,4 @@
 6,front,makes the drone go forward
 7,spin,makes the drone spin (from right to left)
 8,clap,makes the drone take off or land
+9,cut, makes the drone stop
