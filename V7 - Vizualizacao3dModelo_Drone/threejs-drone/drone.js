@@ -1,3 +1,5 @@
+//const { c } = require("vite/dist/node/types.d-aGj9QkWt");
+
 // Set up the scene, camera, and renderer
 const scene = new THREE.Scene();
 
@@ -65,44 +67,79 @@ loader.load('drone-model.glb', function (gltf) {
     // WebSocket setup
     const socket = new WebSocket('ws://localhost:8081'); // Replace with your WebSocket server address
 
+    let moveInterval;
+    let moveCommand;
+
     socket.onopen = function () {
         console.log('WebSocket connection opened');
     };
 
     socket.onmessage = function (event) {
-        const command = event.data.toLowerCase();
+        console.log('WebSocket message received:', event.data);
+        const command = JSON.parse(event.data);
+
+        if (moveInterval) {
+            clearInterval(moveInterval);
+            moveInterval = null;
+        }
+
+        if (command === 'cut') {
+            moveCommand = null;
+            return;
+        }
+
+        moveCommand = command;
+
         if (drone) {
-            switch (command) {
-                case 'up':
-                    drone.position.y += 1;
-                    break;
-                case 'down':
-                    drone.position.y -= 1;
-                    break;
-                case 'left':
-                    drone.position.x -= 1;
-                    break;
-                case 'right':
-                    drone.position.x += 1;
-                    break;
-                case 'forward':
-                    drone.position.z -= 1;
-                    break;
-                case 'backward':
-                    drone.position.z += 1;
-                    break;
-                default:
-                    console.log('Unknown command:', command);
-            }
+            moveInterval = setInterval(() => {
+                switch (moveCommand) {
+                    case 'up':
+                        drone.position.y += 0.1;
+                        break;
+                    case 'down':
+                        drone.position.y -= 0.1;
+                        break;
+                    case 'left':
+                        drone.position.x -= 0.1;
+                        break;
+                    case 'right':
+                        drone.position.x += 0.1;
+                        break;
+                    case 'front':
+                        drone.position.z -= 0.1;
+                        break;
+                    case 'back':
+                        drone.position.z += 0.1;
+                        break;
+                    case 'spin':
+                        drone.rotation.y += Math.PI / 18;
+                        break;
+                    case 'clap':
+                        if (drone.position.y === 0) {
+                            drone.position.y = 10;
+                        } else {
+                            drone.position.y = 0;
+                        }
+                        break;
+                    default:
+                        console.log('Unknown command:', moveCommand);
+                }
+            }, 100); // Adjust interval time as needed
         }
     };
 
     socket.onclose = function () {
         console.log('WebSocket connection closed');
+        if (moveInterval) {
+            clearInterval(moveInterval);
+        }
     };
 
     socket.onerror = function (error) {
         console.error('WebSocket error:', error);
+        if (moveInterval) {
+            clearInterval(moveInterval);
+        }
     };
 
     // Render loop
