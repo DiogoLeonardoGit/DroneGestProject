@@ -81,9 +81,6 @@ def predict_movement(samples_data):
 ################################ record and predict movement ###############################
 async def getMove():
     user_input = ''
-    move = ''
-
-    time.sleep(0.3)
 
     #input("Pressione Enter para começar...Irá decorrer uma gravação continua.")
 
@@ -99,34 +96,34 @@ async def getMove():
     # moviment per class
     # each position of the prediction array corresponds to the
     # percentage 0-100% of the model's confidence in the (movement) class
-    if prediction[0] > 50:
+    if prediction[0] > 75:
         print("Movimento: Nenhum (noise)")
         move = "noise"
-    elif prediction[1] > 50:
+    elif prediction[1] > 75:
         print("Movimento: Up")
         move = "up"
-    elif prediction[2] > 50:
+    elif prediction[2] > 75:
         print("Movimento: Down")
         move = "down"
-    elif prediction[3] > 50:
+    elif prediction[3] > 75:
         print("Movimento: Left")
         move = "left"
-    elif prediction[4] > 50:
+    elif prediction[4] > 75:
         print("Movimento: Right")
         move = "right"
-    elif prediction[5] > 50:
+    elif prediction[5] > 75:
         print("Movimento: Back")
         move = "back"
-    elif prediction[6] > 50:
+    elif prediction[6] > 75:
         print("Movimento: Front")
         move = "front"
-    elif prediction[7] > 50:
+    elif prediction[7] > 75:
         print("Movimento: Spin")
         move = "spin"
-    elif prediction[8] > 50:
+    elif prediction[8] > 75:
         print("Movimento: Clap")
         move = "clap"
-    elif prediction[9] > 50:
+    elif prediction[9] > 75:
         print("Movimento: Cut")
         move = "cut"
     else:
@@ -135,15 +132,40 @@ async def getMove():
 
     return move
 
+async def handle_message(websocket, message):
+    try:
+        data = json.loads(message)
+        if 'event' in data and data['event'] == 'mouseClick':
+            print("Mouse click event received, recording movement...")
+            await websocket.send(json.dumps("recording"))
+            await asyncio.sleep(0.1)
+            data = await getMove()
+            await websocket.send(json.dumps(data))
+            await asyncio.sleep(0.1)  # Adjust the frequency as needed
+    except json.JSONDecodeError as e:
+        print(f"Failed to decode JSON: {e}")
 
 async def send_commands(websocket, path):
-    input("Pressione Enter para começar...Irá decorrer uma gravação continua.")
+    print("Client connected.")
+    async for message in websocket:
+        await handle_message(websocket, message)
+    """
     while True:
+        input("Pressione Enter para capturar movimento.")
+        await websocket.send(json.dumps("recording"))
+        await asyncio.sleep(0.1)
         data = await getMove()
         await websocket.send(json.dumps(data))
         await asyncio.sleep(0.1)  # Adjust the frequency as needed
+        """
 
+
+# set up the server for sending and receiving messages
 start_server = websockets.serve(send_commands, "localhost", 8081)
 
+# start the server
 asyncio.get_event_loop().run_until_complete(start_server)
+# keep the server running
 asyncio.get_event_loop().run_forever()
+
+

@@ -41,7 +41,7 @@ let drone;
 loader.load('drone-model.glb', function (gltf) {
     drone = gltf.scene;
     scene.add(drone);
-    drone.position.set(0, 0, 0);  // Position the drone at the origin
+    drone.position.set(0, -3, 0);  // Position the drone at the origin
     drone.scale.set(1, 1, 1);  // Scale the drone if necessary
 
     // Load and apply texture to the drone
@@ -61,14 +61,23 @@ loader.load('drone-model.glb', function (gltf) {
     plane.rotation.x = Math.PI / 2;  // Rotate to make it horizontal
     scene.add(plane);
 
-    // Set camera position
-    camera.position.z = 7.5;
+    // Set camera starting position
+    camera.position.z = 5.5;
 
     // WebSocket setup
     const socket = new WebSocket('ws://localhost:8081'); // Replace with your WebSocket server address
 
+    let speed = 0.02;
     let moveInterval;
     let moveCommand;
+    let droneFlying = false;
+    let droneStartingPosition = drone.position;
+    const maxheight = 4;
+    const minheight = -5;
+    const maxwidth = 9.5;
+    const minwidth = -9.5;
+    const maxdepth = 4;
+    const mindepth = -7.5;
 
     socket.onopen = function () {
         console.log('WebSocket connection opened');
@@ -77,53 +86,136 @@ loader.load('drone-model.glb', function (gltf) {
     socket.onmessage = function (event) {
         console.log('WebSocket message received:', event.data);
         const command = JSON.parse(event.data);
-
-        if (moveInterval) {
-            clearInterval(moveInterval);
-            moveInterval = null;
-        }
-
+        
         if (command === 'cut') {
             moveCommand = null;
+            document.getElementById('current-movement').innerText = "None";
+            if (moveInterval) {
+                clearInterval(moveInterval);
+            }
+            return;
+        }
+
+        if (command === 'noise' || command === 'unknown') {
+            return;
+        }
+
+        if (command === 'recording') {
+            // update recording time on the screen starting on 2.00 seconds to 0.00 seconds decreasing 0.01 seconds
+            let recordingTime = 2.00;
+            document.getElementById('recording-time').style.color = 'red';
+            const recordingInterval = setInterval(() => {
+                recordingTime -= 0.01;
+                document.getElementById('recording-time').innerText = recordingTime.toFixed(2);
+                if (recordingTime < 0.01) {
+                    clearInterval(recordingInterval);
+                    document.getElementById('recording-time').innerText = '0.00';
+                    document.getElementById('recording-time').style.color = 'white';
+                }
+            }, 10); // Adjust interval time as needed
             return;
         }
 
         moveCommand = command;
 
-        if (drone) {
+        // update the drone movement on the screen with the new movement
+        document.getElementById('current-movement').innerText = moveCommand;
+
+        if (droneFlying || moveCommand === 'clap') {
             moveInterval = setInterval(() => {
+                
                 switch (moveCommand) {
                     case 'up':
-                        drone.position.y += 0.1;
-                        break;
-                    case 'down':
-                        drone.position.y -= 0.1;
-                        break;
-                    case 'left':
-                        drone.position.x -= 0.1;
-                        break;
-                    case 'right':
-                        drone.position.x += 0.1;
-                        break;
-                    case 'front':
-                        drone.position.z -= 0.1;
-                        break;
-                    case 'back':
-                        drone.position.z += 0.1;
-                        break;
-                    case 'spin':
-                        drone.rotation.y += Math.PI / 18;
-                        break;
-                    case 'clap':
-                        if (drone.position.y === 0) {
-                            drone.position.y = 10;
+                        if (drone.position.y >= maxheight) {
+                            break;
                         } else {
-                            drone.position.y = 0;
+                            drone.position.y += speed;
+                            break;
+                        }
+                    case 'down':
+                        if (drone.position.y <= minheight) {
+                            break;
+                        } else {
+                            drone.position.y -= speed;
+                            break;
+                        }
+                    case 'left':
+                        if (drone.position.x <= minwidth) {
+                            break;
+                        } else {
+                            drone.position.x -= speed;
+                            break;
+                        }
+                    case 'right':
+                        if (drone.position.x >= maxwidth) {
+                            break;
+                        } else {
+                            drone.position.x += speed;
+                            break;
+                        }
+                    case 'front':
+                        if (drone.position.z >= maxdepth) {
+                            break;
+                        } else {
+                            drone.position.z += speed;
+                            break;
+                        }
+                    case 'back':
+                        if (drone.position.z <= mindepth) {
+                            break;
+                        } else {
+                            drone.position.z -= speed;
+                            break;
+                        }
+                    case 'clap':
+                        if (drone.position == droneStartingPosition) {
+                            takeOff = setInterval(() => {
+                                if (drone.position.y >= 0) {
+                                    clearInterval(takeOff);
+                                    droneFlying = true;
+                                }else {
+                                    drone.position.y += speed;
+                                }
+                            }, 100);
+                        } else {
+                            // move the drone to the starting position
+                            land = setInterval(() => {
+                                if (drone.position == droneStartingPosition) {
+                                    clearInterval(land);
+                                    droneFlying = false;
+                                }
+
+                                if (drone.position.y != droneStartingPosition.y) {
+                                    if (drone.position.y < droneStartingPosition.y) {
+                                        drone.position.y += speed;
+                                    } else {
+                                        drone.position.y -= speed;
+                                    }
+                                }
+
+                                if (drone.position.x != droneStartingPosition.x) {
+                                    if (drone.position.x < droneStartingPosition.x) {
+                                        drone.position.x += speed;
+                                    } else {
+                                        drone.position.x -= speed;
+                                    }
+                                }
+
+                                if (drone.position.z != droneStartingPosition.z) {
+                                    if (drone.position.z < droneStartingPosition.z) {
+                                        drone.position.z += speed;
+                                    } else {
+                                        drone.position.z -= speed;
+                                    }
+                                }
+                                
+                            }, 100);
                         }
                         break;
                     default:
                         console.log('Unknown command:', moveCommand);
                 }
+                console.log('Drone position:', drone.position);
             }, 100); // Adjust interval time as needed
         }
     };
@@ -142,6 +234,15 @@ loader.load('drone-model.glb', function (gltf) {
         }
     };
 
+    // Add event listener for mouse clicks
+    window.addEventListener('mousedown', function () {
+        if (socket.readyState === WebSocket.OPEN) {
+            const message = JSON.stringify({ event: 'mouseClick' });
+            socket.send(message);
+            console.log('Mouse click event sent to server');
+        }
+    });
+
     // Render loop
     function animate() {
         requestAnimationFrame(animate);
@@ -156,9 +257,22 @@ loader.load('drone-model.glb', function (gltf) {
 // Add zoom in/out functionality
 window.addEventListener('wheel', (event) => {
     const zoomSpeed = 1.1;
+    
+    // define min and max zoom
+    const minZoom = 7.5; // starting zoom
+    const maxZoom = 0.2; // maximum zoom
+
     if (event.deltaY < 0) {
+        if (camera.position.z <= maxZoom) {
+            return;
+        }
         camera.position.z /= zoomSpeed;
     } else {
+        if (camera.position.z >= minZoom) {
+            return;
+        }
         camera.position.z *= zoomSpeed;
     }
+
+    console.log('Zoom:', camera.position.z);
 });
