@@ -35,9 +35,15 @@ scene.add(light);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 scene.add(directionalLight);
 
+// Audio listener
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
 // Load the GLTF model and add a ground plane for reference
 const loader = new THREE.GLTFLoader();
 let drone;
+let sound;
+let currentSound = 'takeoff';
 loader.load('drone-model.glb', function (gltf) {
     drone = gltf.scene;
     scene.add(drone);
@@ -54,6 +60,69 @@ loader.load('drone-model.glb', function (gltf) {
         }
     });
 
+    // Function to change the sound
+    function changeSoundTo(newSound) {
+        newSound = `sounds/${newSound}.mp3`;
+        const duration = 0.2; // Adjust the duration as needed
+        
+        // Reduce the volume of the current sound
+        if (sound && sound.isPlaying) {
+            const initialVolume = sound.getVolume();
+            const fadeOutInterval = setInterval(() => {
+                if (sound.getVolume() > 0) {
+                    sound.setVolume(sound.getVolume() - initialVolume / (duration * 100));
+                } else {
+                    sound.stop();
+                    clearInterval(fadeOutInterval);
+
+                    // Load the new sound
+                    const audioLoader = new THREE.AudioLoader();
+                    audioLoader.load(newSound, function (buffer) {
+                        sound.setBuffer(buffer);
+                        sound.setLoop(true); // Set the sound to loop
+                        sound.setVolume(0); // Start the new sound with volume 0
+                        sound.play();
+
+                        // Increase the volume of the new sound
+                        const fadeInInterval = setInterval(() => {
+                            if (sound.getVolume() < initialVolume) {
+                                sound.setVolume(sound.getVolume() + initialVolume / (duration * 100));
+                            } else {
+                                clearInterval(fadeInInterval);
+                            }
+                        }, 10); // Adjust the interval time as needed
+                    });
+
+                    // Update the current sound file variable
+                    currentSound = newSound;
+                }
+            }, 10); // Adjust the interval time as needed
+        } else {
+            // If no sound is currently playing, just load the new sound
+            const audioLoader = new THREE.AudioLoader();
+            audioLoader.load(newSound, function (buffer) {
+                sound.setBuffer(buffer);
+                sound.setLoop(true); // Set the sound to loop
+                sound.setVolume(1); // Set the volume to the initial volume
+                sound.play();
+            });
+
+            // Update the current sound file variable
+            currentSound = newSound;
+        }
+    }
+
+    // Add audio to the drone
+    const audioLoader = new THREE.AudioLoader();
+    sound = new THREE.PositionalAudio(listener);
+    audioLoader.load('sounds/takeoff.mp3', function (buffer) {
+        sound.setBuffer(buffer);
+        sound.setVolume(1);
+        sound.setRefDistance(20);
+        //sound.play();
+    });
+    drone.add(sound);
+
     // Add a ground plane for reference
     const geometry = new THREE.PlaneGeometry(100, 100);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
@@ -65,19 +134,23 @@ loader.load('drone-model.glb', function (gltf) {
     camera.position.z = 5.5;
 
     // WebSocket setup
-    const socket = new WebSocket('ws://localhost:8081'); // Replace with your WebSocket server address
+    const socket = new WebSocket('ws://localhost:8081'); // same as server
 
-    let speed = 0.02;
+    // Parameters definition 
+    let speed = 0.03;
     let moveInterval;
     let moveCommand;
     let droneFlying = false;
-    let droneStartingPosition = drone.position;
+    let droneStartingPosition = new THREE.Vector3(0, -3, 0);  // set the initial drone position
     const maxheight = 4;
-    const minheight = -5;
-    const maxwidth = 9.5;
-    const minwidth = -9.5;
+    const minheight = -4;
+    const maxwidth = 8;
+    const minwidth = -8;
     const maxdepth = 4;
     const mindepth = -7.5;
+
+    // set label for the current movement
+    document.getElementById('current-movement').innerText = "Landed";
 
     socket.onopen = function () {
         console.log('WebSocket connection opened');
@@ -86,10 +159,10 @@ loader.load('drone-model.glb', function (gltf) {
     socket.onmessage = function (event) {
         console.log('WebSocket message received:', event.data);
         const command = JSON.parse(event.data);
-        
+
         if (command === 'cut') {
             moveCommand = null;
-            document.getElementById('current-movement').innerText = "None";
+            document.getElementById('current-movement').innerText = "hovering";
             if (moveInterval) {
                 clearInterval(moveInterval);
             }
@@ -118,12 +191,100 @@ loader.load('drone-model.glb', function (gltf) {
 
         moveCommand = command;
 
+        if (moveCommand === 'clap') {
+            if (!droneFlying) {
+                // play the sound
+                if (!sound.isPlaying) {
+                    changeSoundTo('takeoff');
+                    //sound.play();
+                }
+                takeOff = setInterval(() => {
+                    if (drone.position.y >= 0) {
+
+                        moveCommand = null;
+                        document.getElementById('current-movement').innerText = "hovering";
+                        if (takeOff) {
+                            clearInterval(takeOff);
+                        }
+
+                        droneFlying = true;
+                        if (currentSound != 'flying') {
+                            changeSoundTo('flying');
+                            currentSound = 'flying';
+                        }
+                        return;
+                    } else {
+                        console.log('Taking off:', drone.position);
+                        // label the current movement
+                        document.getElementById('current-movement').innerText = "Taking off";
+                        drone.position.y += speed;
+                    }
+                }, 50);
+            } else {
+                // move the drone to the starting position
+                if (currentSound != 'landing') {
+                    changeSoundTo('landing');
+                    currentSound = 'landing';
+                }
+                land = setInterval(() => {
+                    if (Math.abs(drone.position.y - droneStartingPosition.y) < 0.05 && Math.abs(drone.position.x - droneStartingPosition.x) < 0.05 && Math.abs(drone.position.z - droneStartingPosition.z) < 0.05){
+                        console.log('Landed:', drone.position);
+                        moveCommand = null;
+                        document.getElementById('current-movement').innerText = "Landed";
+                        if (land) {
+                            clearInterval(land);
+                        }
+                        clearInterval(moveInterval);
+                        droneFlying = false;
+                        // stop the sound
+                        if (sound.isPlaying) {
+                            sound.stop();
+                        }
+                        return;
+                    } else {
+                        // label the current movement
+                        document.getElementById('current-movement').innerText = "Landing";
+                        console.log('Landing:', drone.position);
+                        if (Math.abs(drone.position.y - droneStartingPosition.y) > 0.05) {
+                            if (drone.position.y < droneStartingPosition.y) {
+                                drone.position.y += speed;
+                            } else {
+                                drone.position.y -= speed;
+                            }
+                        }
+
+                        if (Math.abs(drone.position.x - droneStartingPosition.x) > 0.05) {
+                            if (drone.position.x < droneStartingPosition.x) {
+                                drone.position.x += speed;
+                            } else {
+                                drone.position.x -= speed;
+                            }
+                        }
+
+                        if (Math.abs(drone.position.z - droneStartingPosition.z) > 0.05){
+                            if (drone.position.z < droneStartingPosition.z) {
+                                drone.position.z += speed;
+                            } else {
+                                drone.position.z -= speed;
+                            }
+                        }
+                    }
+                }, 35);
+            }
+            return;
+        }
+
         // update the drone movement on the screen with the new movement
         document.getElementById('current-movement').innerText = moveCommand;
 
-        if (droneFlying || moveCommand === 'clap') {
+        if (droneFlying) {
+
+            if (moveInterval) {
+                clearInterval(moveInterval);
+            }
+
             moveInterval = setInterval(() => {
-                
+                speed = 0.03;
                 switch (moveCommand) {
                     case 'up':
                         if (drone.position.y >= maxheight) {
@@ -167,57 +328,15 @@ loader.load('drone-model.glb', function (gltf) {
                             drone.position.z -= speed;
                             break;
                         }
-                    case 'clap':
-                        if (drone.position == droneStartingPosition) {
-                            takeOff = setInterval(() => {
-                                if (drone.position.y >= 0) {
-                                    clearInterval(takeOff);
-                                    droneFlying = true;
-                                }else {
-                                    drone.position.y += speed;
-                                }
-                            }, 100);
-                        } else {
-                            // move the drone to the starting position
-                            land = setInterval(() => {
-                                if (drone.position == droneStartingPosition) {
-                                    clearInterval(land);
-                                    droneFlying = false;
-                                }
-
-                                if (drone.position.y != droneStartingPosition.y) {
-                                    if (drone.position.y < droneStartingPosition.y) {
-                                        drone.position.y += speed;
-                                    } else {
-                                        drone.position.y -= speed;
-                                    }
-                                }
-
-                                if (drone.position.x != droneStartingPosition.x) {
-                                    if (drone.position.x < droneStartingPosition.x) {
-                                        drone.position.x += speed;
-                                    } else {
-                                        drone.position.x -= speed;
-                                    }
-                                }
-
-                                if (drone.position.z != droneStartingPosition.z) {
-                                    if (drone.position.z < droneStartingPosition.z) {
-                                        drone.position.z += speed;
-                                    } else {
-                                        drone.position.z -= speed;
-                                    }
-                                }
-                                
-                            }, 100);
-                        }
+                    case 'spin':
+                        drone.rotation.y += speed;
                         break;
                     default:
                         console.log('Unknown command:', moveCommand);
                 }
-                console.log('Drone position:', drone.position);
-            }, 100); // Adjust interval time as needed
+            }, 50);
         }
+        return;
     };
 
     socket.onclose = function () {
@@ -257,7 +376,7 @@ loader.load('drone-model.glb', function (gltf) {
 // Add zoom in/out functionality
 window.addEventListener('wheel', (event) => {
     const zoomSpeed = 1.1;
-    
+
     // define min and max zoom
     const minZoom = 7.5; // starting zoom
     const maxZoom = 0.2; // maximum zoom

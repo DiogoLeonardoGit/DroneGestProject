@@ -134,21 +134,21 @@ async def getMove():
 
 async def handle_message(websocket, message):
     try:
-        data = json.loads(message)
-        if 'event' in data and data['event'] == 'mouseClick':
+        data = json.loads(message) # Parse the JSON message
+        if 'event' in data and data['event'] == 'mouseClick': # Check if the event is a mouse click
             print("Mouse click event received, recording movement...")
-            await websocket.send(json.dumps("recording"))
-            await asyncio.sleep(0.1)
-            data = await getMove()
-            await websocket.send(json.dumps(data))
-            await asyncio.sleep(0.1)  # Adjust the frequency as needed
+            await websocket.send(json.dumps("recording")) # Send a message to the client to start the recording countdown
+            await asyncio.sleep(0.1) 
+            data = await getMove() # Get the movement data and the prediction from the model
+            await websocket.send(json.dumps(data)) # Send the movement data to the client in JSON format
+            await asyncio.sleep(0.1) 
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON: {e}")
 
 async def send_commands(websocket, path):
     print("Client connected.")
-    async for message in websocket:
-        await handle_message(websocket, message)
+    async for message in websocket: # Loop to handle incoming messages
+        await handle_message(websocket, message) 
     """
     while True:
         input("Pressione Enter para capturar movimento.")
@@ -160,12 +160,12 @@ async def send_commands(websocket, path):
         """
 
 
-# set up the server for sending and receiving messages
-start_server = websockets.serve(send_commands, "localhost", 8081)
+# set up the server for sending and receiving messages from the client on port 8081
+start_server = websockets.serve(send_commands, "localhost", 8081) 
 
-# start the server
+# start the server and run the event loop
 asyncio.get_event_loop().run_until_complete(start_server)
-# keep the server running
+# keep the server running indefinitely
 asyncio.get_event_loop().run_forever()
 
 
