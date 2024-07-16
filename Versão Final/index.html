@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DroneGest Visualizer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            z-index: 100;
+        }
+        #overlay-right {
+            position: absolute;
+            top: 10px;
+            right: 30px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="overlay">Recording Time: <span id="recording-time">0.00</span></div>
+    <div id="overlay-right">Current Movement: <span id="current-movement">None</span></div>
+
+    <!-- Imports of the three js and related -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="drone.js"></script> <!-- Loading the client side script -->
+</body>
+</html>
